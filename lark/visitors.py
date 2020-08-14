@@ -401,11 +401,21 @@ class CollapseAmbiguities(Transformer):
         return [t]
 
 class RemoveIntermediateAmbiguities(Transformer_NonRecursive):
+    """
+    Transform an intermediate ambiguous AST produced by a 
+    CompleteForestToAmbiguosTreeVisitor into an ambiguous AST
+    containing only '_ambig' nodes to represent ambiguity.
+
+    As ForestVisitor uses a non-recursive walk of the SPPF, this 
+    Transformer does a non-recursive walk of the produced tree, as it could
+    very well be larger than the SPPF.
+    """
 
     def __init__(self):
         self.ambig_stack = []
 
     def _ambig(self, children):
+        # Collapse nested ambiguities
         result = Tree('_ambig', [])
         for child in children:
             if child.data == '_ambig':
@@ -424,6 +434,8 @@ class RemoveIntermediateAmbiguities(Transformer_NonRecursive):
             # Due to the structure of the SPPF,
             # an _iambig node can only appear as the first child
             if children and children[0] == self.ambig_stack[-1]:
+                # replace this node with an '_ambig' node containing
+                # all nested derivations of this rule
                 iambig_node = self.ambig_stack.pop()
                 result = Tree('_ambig', [])
                 for grandchild in iambig_node.children:
