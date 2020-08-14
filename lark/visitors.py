@@ -414,20 +414,23 @@ class RemoveIntermediateAmbiguities(Transformer_NonRecursive):
     def __init__(self):
         self.ambig_stack = []
 
-    def _ambig(self, children):
-        # Collapse nested ambiguities
-        result = Tree('_ambig', [])
+    def _collapse_ambig(self, root, children):
         for child in children:
             if child.data == '_ambig':
-                for grandchild in child.children:
-                    result.children.append(grandchild)
+                root.children += child.children
             else:
-                result.children.append(child)
+                root.children.append(child)
+
+    def _ambig(self, children):
+        result = Tree('_ambig', [])
+        self._collapse_ambig(result, children)
         return result
 
     def _iambig(self, children):
-        self.ambig_stack.append(Tree('_iambig', children))
-        return self.ambig_stack[-1]
+        result = Tree('_iambig', [])
+        self._collapse_ambig(result, children)
+        self.ambig_stack.append(result)
+        return result
 
     def __default__(self, data, children, meta):
         if self.ambig_stack:
