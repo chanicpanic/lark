@@ -364,7 +364,26 @@ class ForestToAmbiguousTreeVisitor(ForestToTreeVisitor):
             else:
                 self.result = result
 
-class CompleteForestToAmbiguosTreeVisitor(ForestToTreeVisitor):
+class CompleteForestToAmbiguosTreeVisitor(ForestToTreeVisitor): 
+    """ 
+    An augmented version of ForestToAmbiguousTreeVisitor that is designed to 
+    handle ambiguous intermediate nodes as well as ambiguous symbol nodes.
+
+    For ease of implementation, it has not been attempted to construct the
+    AST in the same format as ForestToAmbiguousTreeVisitor during the forest
+    walk. Instead, an intermediate version of the ambiguous AST is 
+    constructed similar to the structure of the SPPF.
+
+    - When an ambiguous intermediate node is encountered, an '_imambig' node
+      is inserted into the tree.
+    - Each possible derivation of an ambiguous intermediate node is represented 
+      by an '_inter' node added as a child of the corresponding '_imambig' node.
+
+    After the intermediate ambiguous AST is constructed, the intermediate
+    ambiguities are propagated up to the nearest rule and replaced with
+    '_ambig' nodes using the RemoveIntermediateAmbiguities Transformer,
+    returning a tree in the expected format.
+    """
 
     def visit_token_node(self, node):
         self.output_stack[-1].children.append(node)
