@@ -477,7 +477,7 @@ def _make_full_earley_test(LEXER):
             self.assertEqual(ambig_tree.data, '_ambig')
             self.assertEqual(set(ambig_tree.children), expected)
 
-        def test_ambiguous_symbol_and_intermediate_node(self):
+        def test_ambiguous_symbol_and_intermediate_nodes(self):
             grammar = """
             start: ab bc cd
             !ab: "A" "B"?
@@ -507,6 +507,46 @@ def _make_full_earley_test(LEXER):
                     Tree('ab', ['A']), 
                     Tree('bc', ['B']), 
                     Tree('cd', ['C', 'D'])
+                ]),
+            }
+            self.assertEqual(ambig_tree.data, '_ambig')
+            self.assertEqual(set(ambig_tree.children), expected)
+
+        def test_nested_intermediate_nodes(self):
+            grammar = """
+            start: ab bc cd e?
+            !ab: "A" "B"?
+            !bc: "B"? "C"?
+            !cd: "C"? "D"
+            !e: "E"
+            """
+
+            l = Lark(grammar, parser='earley', ambiguity='explicit', lexer=LEXER)
+            ambig_tree = l.parse("ABCDE")
+            expected = {
+                Tree('start', [
+                    Tree('ab', ['A', 'B']),
+                    Tree('bc', ['C']),
+                    Tree('cd', ['D']),
+                    Tree('e', ['E'])
+                ]),
+                Tree('start', [
+                    Tree('ab', ['A']),
+                    Tree('bc', ['B', 'C']),
+                    Tree('cd', ['D']),
+                    Tree('e', ['E'])
+                ]),
+                Tree('start', [
+                    Tree('ab', ['A']),
+                    Tree('bc', ['B']),
+                    Tree('cd', ['C', 'D']),
+                    Tree('e', ['E'])
+                ]),
+                Tree('start', [
+                    Tree('ab', ['A', 'B']),
+                    Tree('bc', []),
+                    Tree('cd', ['C', 'D']),
+                    Tree('e', ['E'])
                 ]),
             }
             self.assertEqual(ambig_tree.data, '_ambig')
