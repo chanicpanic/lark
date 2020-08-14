@@ -16,6 +16,7 @@ from importlib import import_module
 from ..utils import logger
 from ..tree import Tree
 from ..exceptions import ParseError
+from ..visitors import RemoveIntermediateAmbiguities
 
 class ForestNode(object):
     pass
@@ -384,7 +385,7 @@ class CompleteForestToAmbiguosTreeVisitor(ForestToTreeVisitor):
             if self.output_stack:
                 self.output_stack[-1].children.append(result)
             else:
-                self.result = result
+                self.result = RemoveIntermediateAmbiguities().transform(result)
 
     def visit_packed_node_in(self, node):
         if not node.parent.is_intermediate:
@@ -403,7 +404,8 @@ class CompleteForestToAmbiguosTreeVisitor(ForestToTreeVisitor):
         if self.output_stack:
             self.output_stack[-1].children.append(result)
         else:
-            self.result = result
+            self.result = RemoveIntermediateAmbiguities().transform(result)
+
 
 class ForestToPyDotVisitor(ForestVisitor):
     """

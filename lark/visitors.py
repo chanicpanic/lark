@@ -399,3 +399,36 @@ class CollapseAmbiguities(Transformer):
         return [Tree(data, children, meta) for children in combine_alternatives(children_lists)]
     def __default_token__(self, t):
         return [t]
+
+class RemoveIntermediateAmbiguities(Transformer_NonRecursive):
+
+    def __init__(self):
+        self.ambig_stack = []
+
+    def _ambig(self, children):
+        result = Tree('_ambig', [])
+        for child in children:
+            if child.data == '_ambig':
+                for grandchild in child.children:
+                    result.children.append(grandchild)
+            else:
+                result.children.append(child)
+        return result
+
+    def _iambig(self, children):
+        self.ambig_stack.append(Tree('_iambig', children))
+        return self.ambig_stack[-1]
+
+    def __default__(self, data, children, meta):
+        if self.ambig_stack:
+            # Due to the structure of the SPPF,
+            # an _iambig node can only appear as the first child
+            if children and children[0] == self.ambig_stack[-1]:
+                iambig_node = self.ambig_stack.pop()
+                result = Tree('_ambig', [])
+                for grandchild in iambig_node.children:
+                    new_tree = Tree(data, grandchild.children + children[1:], meta)
+                    result.children.append(new_tree)
+                return result
+        return Tree(data, children, meta)
+
