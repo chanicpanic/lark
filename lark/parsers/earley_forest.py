@@ -410,11 +410,11 @@ class CompleteForestToAmbiguosTreeVisitor(ForestToTreeVisitor):
         if node.is_ambiguous:
             result = self.output_stack.pop()
             if not node.is_intermediate:
+                assert result.data == '_ambig'
                 result = self._collapse_ambig(Tree('_ambig', []), result.children)
             if self.output_stack:
                 self.output_stack[-1].children.append(result)
             else:
-                # self.result = RemoveIntermediateAmbiguities().transform(result)
                 self.result = result
 
     def visit_packed_node_in(self, node):
@@ -429,13 +429,11 @@ class CompleteForestToAmbiguosTreeVisitor(ForestToTreeVisitor):
             result = self.callbacks[node.rule](self.output_stack.pop().children)
         elif node.parent.is_ambiguous:
             result = self.output_stack.pop()
-            # result = self.callbacks[node.rule](self.output_stack.pop().children)
         else:
             return
         if self.output_stack:
             self.output_stack[-1].children.append(result)
         else:
-            # self.result = RemoveIntermediateAmbiguities().transform(result)
             self.result = result
 
 

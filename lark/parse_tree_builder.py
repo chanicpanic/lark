@@ -204,7 +204,7 @@ class AmbiguousIntermediateExpander:
     Propogate ambiguous intermediate nodes and their derivatives up to the
     current rule.
 
-    For example, converts
+    In general, converts
 
     rule
       _iambig
@@ -233,9 +233,10 @@ class AmbiguousIntermediateExpander:
       rule
         childrenFromNestedIambigs
         ...
+        somChildren3
       ...
 
-    while propogating up any nested _iambig nodes.
+    propogating up any nested '_iambig' nodes.
     """
 
     def __init__(self, tree_class, node_builder):
@@ -249,32 +250,30 @@ class AmbiguousIntermediateExpander:
         def _collapse_imabig(children):
             """
             Recursively flatten the parent of an '_iambig' node.
-            Returns an '_iambig' node with children guaranteed not to have 
-            any nested '_iambig' nodes or None if children does not contain
-            an '_iambig' node.
+            Returns a list of '_inter' nodes with guaranteed not 
+            to contain any nested '_iambig' nodes, or None if children does 
+            not contain an '_iambig' node.
             """
 
             # Due to the structure of the SPPF,
-            # an _iambig node can only appear as the first child
+            # an '_iambig' node can only appear as the first child
             if children and _is_iambig_tree(children[0]):
-                # replace this node with an '_iambig' node containing
-                # all nested derivations of this rule
                 iambig_node = children[0]
-                result = Tree('_iambig', [])
+                result = []
                 for grandchild in iambig_node.children:
                     collapsed = _collapse_imabig(grandchild.children)
                     if collapsed:
-                        for child in collapsed.children:
+                        for child in collapsed:
                             child.children += children[1:]
-                        result.children += collapsed.children 
+                        result += collapsed 
                     else:
                         new_tree = self.tree_class('_inter', grandchild.children + children[1:])
-                        result.children.append(new_tree)
+                        result.append(new_tree)
                 return result
 
         collapsed = _collapse_imabig(children)
         if collapsed:
-            processed_nodes = [self.node_builder(c.children) for c in collapsed.children]
+            processed_nodes = [self.node_builder(c.children) for c in collapsed]
             return self.tree_class('_ambig', processed_nodes)
 
         return self.node_builder(children)
