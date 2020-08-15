@@ -512,7 +512,7 @@ def _make_full_earley_test(LEXER):
             self.assertEqual(ambig_tree.data, '_ambig')
             self.assertEqual(set(ambig_tree.children), expected)
 
-        def test_nested_intermediate_nodes(self):
+        def test_nested_ambiguous_intermediate_nodes(self):
             grammar = """
             start: ab bc cd e?
             !ab: "A" "B"?
@@ -548,6 +548,56 @@ def _make_full_earley_test(LEXER):
                     Tree('cd', ['C', 'D']),
                     Tree('e', ['E'])
                 ]),
+            }
+            self.assertEqual(ambig_tree.data, '_ambig')
+            self.assertEqual(set(ambig_tree.children), expected)
+
+        def test_ambiguous_intermediate_node_anon_terminal(self):
+            grammar = """
+            start: ab bc "D"
+            !ab: "A" "B"?
+            !bc: "B"? "C"
+            """
+
+            l = Lark(grammar, parser='earley', ambiguity='explicit', lexer=LEXER)
+            ambig_tree = l.parse("ABCD")
+            expected = {
+                Tree('start', [Tree('ab', ['A']), Tree('bc', ['B', 'C'])]),
+                Tree('start', [Tree('ab', ['A', 'B']), Tree('bc', ['C'])])
+            }
+            self.assertEqual(ambig_tree.data, '_ambig')
+            self.assertEqual(set(ambig_tree.children), expected)
+
+        def test_ambiguous_intermediate_node_inlined_rule(self):
+            grammar = """
+            start: ab _bc d?
+            !ab: "A" "B"?
+            _bc: "B"? "C"
+            !d: "D"
+            """
+
+            l = Lark(grammar, parser='earley', ambiguity='explicit', lexer=LEXER)
+            ambig_tree = l.parse("ABCD")
+            expected = {
+                Tree('start', [Tree('ab', ['A']), Tree('d', ['D'])]),
+                Tree('start', [Tree('ab', ['A', 'B']), Tree('d', ['D'])])
+            }
+            self.assertEqual(ambig_tree.data, '_ambig')
+            self.assertEqual(set(ambig_tree.children), expected)
+
+        def test_ambiguous_intermediate_node_conditionally_inlined_rule(self):
+            grammar = """
+            start: ab bc d?
+            !ab: "A" "B"?
+            !?bc: "B"? "C"
+            !d: "D"
+            """
+
+            l = Lark(grammar, parser='earley', ambiguity='explicit', lexer=LEXER)
+            ambig_tree = l.parse("ABCD")
+            expected = {
+                Tree('start', [Tree('ab', ['A']), Tree('bc', ['B', 'C']), Tree('d', ['D'])]),
+                Tree('start', [Tree('ab', ['A', 'B']), 'C', Tree('d', ['D'])])
             }
             self.assertEqual(ambig_tree.data, '_ambig')
             self.assertEqual(set(ambig_tree.children), expected)
