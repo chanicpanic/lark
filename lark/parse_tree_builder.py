@@ -201,7 +201,7 @@ def maybe_create_ambiguous_expander(tree_class, expansion, keep_all_tokens):
 
 class AmbiguousIntermediateExpander:
     """
-    Propogate ambiguous intermediate nodes and their derivatives up to the
+    Propagate ambiguous intermediate nodes and their derivatives up to the
     current rule.
 
     In general, converts
@@ -214,8 +214,8 @@ class AmbiguousIntermediateExpander:
         _inter
           someChildren2
           ...
-        someChildren3
-        ...
+      someChildren3
+      ...
 
     to
 
@@ -223,20 +223,21 @@ class AmbiguousIntermediateExpander:
       rule
         someChildren1
         ...
-        somChildren3
+        someChildren3
         ...
       rule
-        somChildren2
+        someChildren2
         ...
-        somChildren3
+        someChildren3
         ...
       rule
         childrenFromNestedIambigs
         ...
-        somChildren3
+        someChildren3
+        ...
       ...
 
-    propogating up any nested '_iambig' nodes.
+    propagating up any nested '_iambig' nodes along the way.
     """
 
     def __init__(self, tree_class, node_builder):
@@ -250,7 +251,7 @@ class AmbiguousIntermediateExpander:
         def _collapse_imabig(children):
             """
             Recursively flatten the parent of an '_iambig' node.
-            Returns a list of '_inter' nodes with guaranteed not 
+            Returns a list of '_inter' nodes guaranteed not
             to contain any nested '_iambig' nodes, or None if children does 
             not contain an '_iambig' node.
             """
