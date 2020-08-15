@@ -489,23 +489,23 @@ def _make_full_earley_test(LEXER):
             ambig_tree = l.parse("ABCD")
             expected = {
                 Tree('start', [
-                    Tree('ab', ['A', 'B']), 
-                    Tree('bc', ['C']), 
+                    Tree('ab', ['A', 'B']),
+                    Tree('bc', ['C']),
                     Tree('cd', ['D'])
                 ]),
                 Tree('start', [
-                    Tree('ab', ['A', 'B']), 
-                    Tree('bc', []), 
+                    Tree('ab', ['A', 'B']),
+                    Tree('bc', []),
                     Tree('cd', ['C', 'D'])
                 ]),
                 Tree('start', [
-                    Tree('ab', ['A']), 
-                    Tree('bc', ['B', 'C']), 
+                    Tree('ab', ['A']),
+                    Tree('bc', ['B', 'C']),
                     Tree('cd', ['D'])
                 ]),
                 Tree('start', [
-                    Tree('ab', ['A']), 
-                    Tree('bc', ['B']), 
+                    Tree('ab', ['A']),
+                    Tree('bc', ['B']),
                     Tree('cd', ['C', 'D'])
                 ]),
             }

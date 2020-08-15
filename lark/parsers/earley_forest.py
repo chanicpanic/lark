@@ -364,19 +364,19 @@ class ForestToAmbiguousTreeVisitor(ForestToTreeVisitor):
             else:
                 self.result = result
 
-class CompleteForestToAmbiguosTreeVisitor(ForestToTreeVisitor): 
-    """ 
-    An augmented version of ForestToAmbiguousTreeVisitor that is designed to 
+class CompleteForestToAmbiguousTreeVisitor(ForestToTreeVisitor):
+    """
+    An augmented version of ForestToAmbiguousTreeVisitor that is designed to
     handle ambiguous intermediate nodes as well as ambiguous symbol nodes.
 
     On the way down:
 
     - When an ambiguous intermediate node is encountered, an '_imambig' node
       is inserted into the tree.
-    - Each possible derivation of an ambiguous intermediate node is represented 
+    - Each possible derivation of an ambiguous intermediate node is represented
       by an '_inter' node added as a child of the corresponding '_imambig' node.
 
-    On the way up, these nodes are propogated up the tree and collapsed
+    On the way up, these nodes are propagated up the tree and collapsed
     into a single '_ambig' node for the nearest symbol node ancestor.
     This is achieved by the AmbiguousIntermediateExpander contained in
     the callbacks.

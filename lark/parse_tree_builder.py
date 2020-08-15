@@ -252,7 +252,7 @@ class AmbiguousIntermediateExpander:
             """
             Recursively flatten the parent of an '_iambig' node.
             Returns a list of '_inter' nodes guaranteed not
-            to contain any nested '_iambig' nodes, or None if children does 
+            to contain any nested '_iambig' nodes, or None if children does
             not contain an '_iambig' node.
             """
 
@@ -266,7 +266,7 @@ class AmbiguousIntermediateExpander:
                     if collapsed:
                         for child in collapsed:
                             child.children += children[1:]
-                        result += collapsed 
+                        result += collapsed
                     else:
                         new_tree = self.tree_class('_inter', grandchild.children + children[1:])
                         result.append(new_tree)
