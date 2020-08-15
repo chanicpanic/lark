@@ -16,7 +16,6 @@ from importlib import import_module
 from ..utils import logger
 from ..tree import Tree
 from ..exceptions import ParseError
-from ..visitors import RemoveIntermediateAmbiguities
 
 class ForestNode(object):
     pass
