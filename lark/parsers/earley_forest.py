@@ -385,6 +385,14 @@ class CompleteForestToAmbiguosTreeVisitor(ForestToTreeVisitor):
     returning a tree in the expected format.
     """
 
+    def _collapse_ambig(self, root, children):
+        for child in children:
+            if child.data == '_ambig':
+                root.children += child.children
+            else:
+                root.children.append(child)
+        return root
+
     def visit_token_node(self, node):
         self.output_stack[-1].children.append(node)
 
@@ -401,10 +409,13 @@ class CompleteForestToAmbiguosTreeVisitor(ForestToTreeVisitor):
     def visit_symbol_node_out(self, node):
         if node.is_ambiguous:
             result = self.output_stack.pop()
+            if not node.is_intermediate:
+                result = self._collapse_ambig(Tree('_ambig', []), result.children)
             if self.output_stack:
                 self.output_stack[-1].children.append(result)
             else:
-                self.result = RemoveIntermediateAmbiguities().transform(result)
+                # self.result = RemoveIntermediateAmbiguities().transform(result)
+                self.result = result
 
     def visit_packed_node_in(self, node):
         if not node.parent.is_intermediate:
@@ -418,12 +429,14 @@ class CompleteForestToAmbiguosTreeVisitor(ForestToTreeVisitor):
             result = self.callbacks[node.rule](self.output_stack.pop().children)
         elif node.parent.is_ambiguous:
             result = self.output_stack.pop()
+            # result = self.callbacks[node.rule](self.output_stack.pop().children)
         else:
             return
         if self.output_stack:
             self.output_stack[-1].children.append(result)
         else:
-            self.result = RemoveIntermediateAmbiguities().transform(result)
+            # self.result = RemoveIntermediateAmbiguities().transform(result)
+            self.result = result
 
 
 class ForestToPyDotVisitor(ForestVisitor):
