@@ -200,6 +200,44 @@ def maybe_create_ambiguous_expander(tree_class, expansion, keep_all_tokens):
         return partial(AmbiguousExpander, to_expand, tree_class)
 
 class AmbiguousIntermediateExpander:
+    """
+    Propogate ambiguous intermediate nodes and their derivatives up to the
+    current rule.
+
+    For example, converts
+
+    rule
+      _iambig
+        _inter
+          someChildren1
+          ...
+        _inter
+          someChildren2
+          ...
+        someChildren3
+        ...
+
+    to
+
+    _ambig
+      rule
+        someChildren1
+        ...
+        somChildren3
+        ...
+      rule
+        somChildren2
+        ...
+        somChildren3
+        ...
+      rule
+        childrenFromNestedIambigs
+        ...
+      ...
+
+    while propogating up any nested _iambig nodes.
+    """
+
     def __init__(self, tree_class, node_builder):
         self.node_builder = node_builder
         self.tree_class = tree_class
@@ -209,7 +247,18 @@ class AmbiguousIntermediateExpander:
             return hasattr(child, 'data') and child.data == '_iambig'
 
         def _collapse_imabig(children):
+            """
+            Recursively flatten the parent of an '_iambig' node.
+            Returns an '_iambig' node with children guaranteed not to have 
+            any nested '_iambig' nodes or None if children does not contain
+            an '_iambig' node.
+            """
+
+            # Due to the structure of the SPPF,
+            # an _iambig node can only appear as the first child
             if children and _is_iambig_tree(children[0]):
+                # replace this node with an '_iambig' node containing
+                # all nested derivations of this rule
                 iambig_node = children[0]
                 result = Tree('_iambig', [])
                 for grandchild in iambig_node.children:
