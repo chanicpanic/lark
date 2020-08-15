@@ -170,14 +170,10 @@ class AmbiguousExpander:
         def _is_ambig_tree(child):
             return hasattr(child, 'data') and child.data == '_ambig'
 
-        def _is_iambig_tree(child):
-            return hasattr(child, 'data') and child.data == '_iambig'
-
         #### When we're repeatedly expanding ambiguities we can end up with nested ambiguities.
         #    All children of an _ambig node should be a derivation of that ambig node, hence
         #    it is safe to assume that if we see an _ambig node nested within an ambig node
         #    it is safe to simply expand it into the parent _ambig node as an alternative derivation.
-
         ambiguous = []
         for i, child in enumerate(children):
             if _is_ambig_tree(child):

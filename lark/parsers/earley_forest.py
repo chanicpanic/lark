@@ -370,10 +370,10 @@ class CompleteForestToAmbiguousTreeVisitor(ForestToTreeVisitor):
 
     On the way down:
 
-    - When an ambiguous intermediate node is encountered, an '_imambig' node
+    - When an ambiguous intermediate node is encountered, an '_iambig' node
       is inserted into the tree.
     - Each possible derivation of an ambiguous intermediate node is represented
-      by an '_inter' node added as a child of the corresponding '_imambig' node.
+      by an '_inter' node added as a child of the corresponding '_iambig' node.
 
     On the way up, these nodes are propagated up the tree and collapsed
     into a single '_ambig' node for the nearest symbol node ancestor.
