@@ -200,51 +200,33 @@ def maybe_create_ambiguous_expander(tree_class, expansion, keep_all_tokens):
         return partial(AmbiguousExpander, to_expand, tree_class)
 
 class AmbiguousIntermediateExpander:
-    def __init__(self, node_builder):
+    def __init__(self, tree_class, node_builder):
         self.node_builder = node_builder
+        self.tree_class = tree_class
 
     def __call__(self, children):
         def _is_iambig_tree(child):
             return hasattr(child, 'data') and child.data == '_iambig'
 
-        def _collapse_imabig(children, node_builder, is_base=False):
+        def _collapse_imabig(children):
             if children and _is_iambig_tree(children[0]):
                 iambig_node = children[0]
-                result = Tree('_ambig', [])
+                result = Tree('_iambig', [])
                 for grandchild in iambig_node.children:
-                    new_children = _collapse_imabig(grandchild.children, 
-                            partial(Tree, '_inter'))
-                    if new_children:
-                        new_children = new_children.children
-                        for c in new_children:
-                            c.children += children[1:]
-                        result.children += new_children 
+                    collapsed = _collapse_imabig(grandchild.children)
+                    if collapsed:
+                        for child in collapsed.children:
+                            child.children += children[1:]
+                        result.children += collapsed.children 
                     else:
-                        new_children = grandchild.children
-                        new_tree = Tree('_inter', new_children + children[1:])
+                        new_tree = self.tree_class('_inter', grandchild.children + children[1:])
                         result.children.append(new_tree)
                 return result
 
-        result = _collapse_imabig(children, partial(Tree, '_inter'), is_base=True)
-        if result:
-            r = Tree('_ambig', [])
-            for child in result.children:
-                r.children.append(self.node_builder(child.children))
-            return r
-
-
-
-        # # Due to the structure of the SPPF,
-        # # an _iambig node can only appear as the first child
-        # if children and _is_iambig_tree(children[0]):
-            # # replace this node with an '_ambig' node containing
-            # # all nested derivations of this rule
-            # iambig_node = children[0]
-            # result = Tree('_ambig', [])
-            # for grandchild in iambig_node.children:
-                # new_tree = self.node_builder(grandchild.children + children[1:])
-                # result.children.append(new_tree)
-            # return result
+        collapsed = _collapse_imabig(children)
+        if collapsed:
+            processed_nodes = [self.node_builder(c.children) for c in collapsed.children]
+            return self.tree_class('_ambig', processed_nodes)
 
         return self.node_builder(children)
 
@@ -293,7 +275,7 @@ class ParseTreeBuilder:
                 maybe_create_child_filter(rule.expansion, keep_all_tokens, self.ambiguous, options.empty_indices if self.maybe_placeholders else None),
                 self.propagate_positions and PropagatePositions,
                 self.ambiguous and maybe_create_ambiguous_expander(self.tree_class, rule.expansion, keep_all_tokens),
-                self.ambiguous and AmbiguousIntermediateExpander,
+                self.ambiguous and partial(AmbiguousIntermediateExpander, self.tree_class),
             ]))
 
             yield rule, wrapper_chain
