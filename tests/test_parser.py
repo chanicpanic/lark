@@ -675,6 +675,39 @@ def _make_full_earley_test(LEXER):
             self.assertEqual(ambig_tree.data, '_ambig')
             self.assertEqual(set(ambig_tree.children), expected)
 
+        def test_ambiguous_intermediate_nodes_filtered_drop_duplicates(self):
+            grammar = """
+            start: ab _bc _cd de "F"
+            !ab: "A" "B"?
+            _bc: "B"? "C"?
+            _cd: "C"? "D"?
+            !de: "D"? "E"
+            """
+
+            l = Lark(grammar, parser='earley', ambiguity='explicit', lexer=LEXER)
+            ambig_tree = l.parse("ABCDEF")
+            expected = {
+                Tree('start', [
+                    Tree('ab', ['A', 'B']),
+                    Tree('de', ['D', 'E']),
+                ]),
+                Tree('start', [
+                    Tree('ab', ['A']),
+                    Tree('de', ['D', 'E']),
+                ]),
+                Tree('start', [
+                    Tree('ab', ['A', 'B']),
+                    Tree('de', ['E']),
+                ]),
+                Tree('start', [
+                    Tree('ab', ['A']),
+                    Tree('de', ['E']),
+                ]),
+            }
+            self.assertEqual(ambig_tree.data, '_ambig')
+            self.assertEqual(len(ambig_tree.children), len(expected))
+            self.assertEqual(set(ambig_tree.children), expected)
+
         def test_fruitflies_ambig(self):
             grammar = """
                 start: noun verb noun        -> simple
