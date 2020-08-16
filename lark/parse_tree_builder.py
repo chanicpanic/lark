@@ -270,7 +270,12 @@ class AmbiguousIntermediateExpander:
 
         collapsed = _collapse_imabig(children)
         if collapsed:
-            processed_nodes = [self.node_builder(c.children) for c in collapsed]
+            # After child filtering, many of the derivations may now be
+            # represented by the same tree. Thus, a set is used to prevent
+            # duplicates. As, the order of the children of intermediate
+            # nodes in the SPPF is currently non-deterministic, the loss
+            # of order in the set is dismissible.
+            processed_nodes = {self.node_builder(c.children) for c in collapsed}
             return self.tree_class('_ambig', processed_nodes)
 
         return self.node_builder(children)
