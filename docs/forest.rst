@@ -31,11 +31,13 @@ SymbolNode
 ----------
 
 .. autoclass:: lark.parsers.earley_forest.SymbolNode
+   :members: is_ambiguous, children
 
 PackedNode
 ----------
 
 .. autoclass:: lark.parsers.earley_forest.PackedNode
+   :members: children
 
 ForestVisitor
 -------------
@@ -55,4 +57,4 @@ TreeForestTransformer
 handles_ambiguity
 -----------------
 
-.. autofunction:: lark.parsers.earley_forest.handles_ambiguity
+.. autodecorator:: lark.parsers.earley_forest.handles_ambiguity

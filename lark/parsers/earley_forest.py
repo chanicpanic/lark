@@ -36,6 +36,10 @@ class SymbolNode(ForestNode):
     with each Packed Node child representing a single derivation of a production.
 
     Hence a Symbol Node with a single child is unambiguous.
+
+    :ivar s: A Symbol or a tuple of (rule, ptr) for an intermediate node.
+    :ivar is_intermediate: True if this node is an intermediate node.
+    :ivar priority: The priority of the node's symbol.
     """
     __slots__ = ('s', 'start', 'end', '_children', 'paths', 'paths_loaded', 'priority', 'is_intermediate', '_hash')
     def __init__(self, s, start, end):
@@ -70,10 +74,12 @@ class SymbolNode(ForestNode):
 
     @property
     def is_ambiguous(self):
+        """Returns True if this node is ambiguous."""
         return len(self.children) > 1
 
     @property
     def children(self):
+        """Returns a list of this node's children sorted by priority."""
         if not self.paths_loaded: self.load_paths()
         return sorted(self._children, key=attrgetter('sort_key'))
 
@@ -102,6 +108,12 @@ class SymbolNode(ForestNode):
 class PackedNode(ForestNode):
     """
     A Packed Node represents a single derivation in a symbol node.
+
+    :ivar rule: The Rule associated with this node.
+    :ivar parent: The parent of this node.
+    :ivar left: The left child of this node. None if one does not exist.
+    :ivar right: The right child of this node. None if one does not exist.
+    :ivar priority: The priority of this node.
     """
     __slots__ = ('parent', 's', 'rule', 'start', 'left', 'right', 'priority', '_hash')
     def __init__(self, parent, s, rule, start, left, right):
@@ -130,6 +142,7 @@ class PackedNode(ForestNode):
 
     @property
     def children(self):
+        """Returns a list of this node's children."""
         return [x for x in [self.left, self.right] if x is not None]
 
     def __iter__(self):
