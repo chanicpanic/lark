@@ -27,7 +27,32 @@ when deciding whether using the SPPF is right for you.
   - Rules starting with '?' are never inlined in the SPPF
   - All tokens will appear in the SPPF
 
+SymbolNode
+----------
+
+.. autoclass:: lark.parsers.earley_forest.SymbolNode
+
+PackedNode
+----------
+
+.. autoclass:: lark.parsers.earley_forest.PackedNode
+
 ForestVisitor
 -------------
 
 .. autoclass:: lark.parsers.earley_forest.ForestVisitor
+
+ForestTransformer
+-----------------
+
+.. autoclass:: lark.parsers.earley_forest.ForestTransformer
+
+TreeForestTransformer
+---------------------
+
+.. autoclass:: lark.parsers.earley_forest.TreeForestTransformer
+
+handles_ambiguity
+-----------------
+
+.. autofunction:: lark.parsers.earley_forest.handles_ambiguity
