@@ -1,7 +1,7 @@
 Working with the SPPF
 =====================
 
-When parsing with earley, Lark provides the ``ambiguity='forest'`` option
+When parsing with Earley, Lark provides the ``ambiguity='forest'`` option
 to obtain the shared packed parse forest (SPPF) produced by the parser as 
 an alternative to it being automatically converted to a tree.
 
