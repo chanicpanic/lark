@@ -320,21 +320,19 @@ class ForestVisitor(object):
                 continue
 
 class ForestTransformer(ForestVisitor):
-    """The base class for a bottom-up forest transformation.
+    """The base class for a bottom-up forest transformation. Most users will
+    want to use ``TreeForestTransformer`` instead as it has a friendlier
+    interface and covers most use cases.
+
     Transformations are applied via inheritance and overriding of the
-    following methods:
+    ``transform*node`` methods.
 
-    transform_symbol_node
-    transform_intermediate_node
-    transform_packed_node
-    transform_token_node
-
-    `transform_token_node` receives a Token as an argument.
+    ``transform_token_node`` receives a Token as an argument.
     All other methods receive the node that is being transformed and
     a list of the results of the transformations of that node's children.
     The return value of these methods are the resulting transformations.
 
-    If `Discard` is raised in a transformation, no data from that node
+    If ``Discard`` is raised in a transformation, no data from that node
     will be passed to its parent's transformation.
     """
 
@@ -354,15 +352,19 @@ class ForestTransformer(ForestVisitor):
             return self.data['result'][0]
 
     def transform_symbol_node(self, node, data):
+        """Transform a symbol node."""
         return node
 
     def transform_intermediate_node(self, node, data):
+        """Transform an intermediate node."""
         return node
 
     def transform_packed_node(self, node, data):
+        """Transform a packed node."""
         return node
 
     def transform_token_node(self, node):
+        """Transform a Token."""
         return node
 
     def visit_symbol_node_in(self, node):

@@ -51,6 +51,8 @@ ForestTransformer
 -----------------
 
 .. autoclass:: lark.parsers.earley_forest.ForestTransformer
+   :members: transform, transform_symbol_node, transform_intermediate_node,
+             transform_packed_node, transform_token_node
 
 TreeForestTransformer
 ---------------------
