@@ -58,6 +58,7 @@ TreeForestTransformer
 ---------------------
 
 .. autoclass:: lark.parsers.earley_forest.TreeForestTransformer
+   :members: __default__, __default_token__, __default_ambig__
 
 handles_ambiguity
 -----------------

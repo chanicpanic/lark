@@ -556,13 +556,13 @@ class ForestToParseTree(ForestTransformer):
         return super(ForestToParseTree, self).visit_token_node(node)
 
 def handles_ambiguity(func):
-    """Decorator for methods of subclasses of TreeForestTransformer.
+    """Decorator for methods of subclasses of ``TreeForestTransformer``.
     Denotes that the method should receive a list of transformed derivations."""
     func.handles_ambiguity = True
     return func
 
 class TreeForestTransformer(ForestToParseTree):
-    """A ForestTransformer with a tree-Transformer-like interface.
+    """A ``ForestTransformer`` with a tree ``Transformer``-like interface.
     By default, it will construct a tree.
 
     Methods provided via inheritance are called based on the rule/symbol
@@ -571,16 +571,28 @@ class TreeForestTransformer(ForestToParseTree):
     Methods that act on rules will receive a list of the results of the
     transformations of the rule's children. By default, trees and tokens.
 
-    Methods that act on tokens will receive a Token.
+    Methods that act on tokens will receive a token.
 
     Alternatively, methods that act on rules may be annotated with
-    `handles_ambiguity`. In this case, the function will receive a list
+    ``handles_ambiguity``. In this case, the function will receive a list
     of all the transformations of all the derivations of the rule.
     By default, a list of trees where each tree.data is equal to the
     rule name or one of its aliases.
 
     Non-tree transformations are made possible by override of
-    `__default__`, `__default_token__`, and `__default_ambig__`.
+    ``__default__``, ``__default_token__``, and ``__default_ambig__``.
+
+    .. note::
+
+        Tree shaping features such as inlined rules and token filtering are
+        not built into the transformation. Positions are also not
+        propagated.
+
+    :param tree_class: The tree class to use for construction
+    :param prioritizer: A ``ForestVisitor`` that manipulates the priorities of
+        ForestNodes.
+    :param resolve_ambiguity: If True, ambiguities will be resolved based on
+        priorities. 
     """
 
     def __init__(self, tree_class=Tree, prioritizer=ForestSumVisitor(), resolve_ambiguity=True):
@@ -596,8 +608,8 @@ class TreeForestTransformer(ForestToParseTree):
     def __default_ambig__(self, name, data):
         """Default operation on ambiguous rule (for override).
 
-        Wraps data in an '_ambig_ node if it contains more than
-        one element.'
+        Wraps data in an '_ambig_' node if it contains more than
+        one element.
         """
         if len(data) > 1:
             return self.tree_class('_ambig', data)
@@ -608,7 +620,7 @@ class TreeForestTransformer(ForestToParseTree):
     def __default_token__(self, node):
         """Default operation on Token (for override).
 
-        Returns node
+        Returns ``node``.
         """
         return node
 
