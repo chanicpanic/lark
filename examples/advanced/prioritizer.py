@@ -10,12 +10,13 @@ By negating this count, our prioritizer will prefer nodes with fewer token
 descendants. Thus, we choose the more specific parse.
 """
 
-from lark import Lark, Token
+from lark import Lark
 from lark.parsers.earley_forest import ForestVisitor, TreeForestTransformer
 
 class TokenPrioritizer(ForestVisitor):
 
     def visit_symbol_node_in(self, node):
+        # visit the entire forest by returning node.children
         return node.children
 
     def visit_packed_node_in(self, node):
@@ -24,6 +25,8 @@ class TokenPrioritizer(ForestVisitor):
     def visit_symbol_node_out(self, node):
         priority = 0
         for child in node.children:
+            # Tokens do not have a priority attribute
+            # count them as -1
             priority += getattr(child, 'priority', -1)
         node.priority = priority
 
