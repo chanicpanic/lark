@@ -43,6 +43,9 @@ ForestVisitor
 -------------
 
 .. autoclass:: lark.parsers.earley_forest.ForestVisitor
+   :members: visit, visit_symbol_node_in, visit_symbol_node_out, 
+             visit_packed_node_in, visit_packed_node_out,
+             visit_token_node, on_cycle
 
 ForestTransformer
 -----------------

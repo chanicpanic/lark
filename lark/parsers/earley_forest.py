@@ -171,17 +171,58 @@ class ForestVisitor(object):
     """
     An abstract base class for building forest visitors.
 
-    Use this as a base when you need to walk the forest.
+    This class performs a controllable depth-first walk of an SPPF.
+    The visitor will not enter cycles and will backtrack if one is encountered.
+    Subclasses are notified of cycles through the ``on_cycle`` method.
+
+    Behavior is to be defined for visit events by overriding the 
+    ``visit*node*`` functions.
+
+    The walk is controlled by the return values of the ``visit*node_in`` 
+    methods. Returning a node(s) will schedule them to be visited. The visitor
+    will begin to backtrack if no nodes are returned.
     """
 
-    def visit_token_node(self, node): pass
-    def visit_symbol_node_in(self, node): pass
-    def visit_symbol_node_out(self, node): pass
-    def visit_packed_node_in(self, node): pass
-    def visit_packed_node_out(self, node): pass
-    def on_cycle(self, node, get_path): pass
+    def visit_token_node(self, node):
+        """Called when a Token is visited. Token nodes are always leaves."""
+        pass
+
+    def visit_symbol_node_in(self, node): 
+        """Called when a symbol node is visited. Nodes that are returned
+        will be scheduled to be visited. If ``visit_intermediate_node_in``
+        is not implemented, this function will be called for intermediate
+        nodes as well."""
+        pass
+
+    def visit_symbol_node_out(self, node):
+        """Called after all nodes returned from a corresponding ``visit_symbol_node_in``
+        call have been visited. If ``visit_intermediate_node_out``
+        is not implemented, this function will be called for intermediate
+        nodes as well."""
+        pass
+
+    def visit_packed_node_in(self, node):
+        """Called when a packed node is visited. Nodes that are returned
+        will be scheduled to be visited. """
+        pass
+
+    def visit_packed_node_out(self, node):
+        """Called after all nodes returned from a corresponding ``visit_packed_node_in``
+        call have been visited."""
+        pass
+
+    def on_cycle(self, node, get_path):
+        """Called when a cycle is encountered. 
+
+        :param node: The node that causes a cycle.
+        :param get_path: A function that when called, returns a sequence of the
+            nodes in the cycle. The first element in the sequence is ``node``,
+            and the last element is the last visited node not equal to ``node``.
+        """
+        pass
 
     def visit(self, root):
+        """Visit the SPPF starting at ``root``."""
         def make_get_path(node):
             """Create a function that will return a path from `node` to
             the last visited node. Used for the `on_cycle` callback."""
