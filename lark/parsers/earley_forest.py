@@ -79,7 +79,8 @@ class SymbolNode(ForestNode):
 
     @property
     def children(self):
-        """Returns a list of this node's children sorted by priority."""
+        """Returns a list of this node's children sorted from greatest to
+        least priority."""
         if not self.paths_loaded: self.load_paths()
         return sorted(self._children, key=attrgetter('sort_key'))
 
@@ -109,10 +110,10 @@ class PackedNode(ForestNode):
     """
     A Packed Node represents a single derivation in a symbol node.
 
-    :ivar rule: The Rule associated with this node.
+    :ivar rule: The rule associated with this node.
     :ivar parent: The parent of this node.
-    :ivar left: The left child of this node. None if one does not exist.
-    :ivar right: The right child of this node. None if one does not exist.
+    :ivar left: The left child of this node. ``None`` if one does not exist.
+    :ivar right: The right child of this node. ``None`` if one does not exist.
     :ivar priority: The priority of this node.
     """
     __slots__ = ('parent', 's', 'rule', 'start', 'left', 'right', 'priority', '_hash')
@@ -175,7 +176,7 @@ class ForestVisitor(object):
     The visitor will not enter cycles and will backtrack if one is encountered.
     Subclasses are notified of cycles through the ``on_cycle`` method.
 
-    Behavior is to be defined for visit events by overriding the 
+    Behavior for visit events is defined by overriding the 
     ``visit*node*`` functions.
 
     The walk is controlled by the return values of the ``visit*node_in`` 
@@ -184,7 +185,7 @@ class ForestVisitor(object):
     """
 
     def visit_token_node(self, node):
-        """Called when a Token is visited. Token nodes are always leaves."""
+        """Called when a ``Token`` is visited. ``Token`` nodes are always leaves."""
         pass
 
     def visit_symbol_node_in(self, node): 
@@ -327,7 +328,7 @@ class ForestTransformer(ForestVisitor):
     Transformations are applied via inheritance and overriding of the
     ``transform*node`` methods.
 
-    ``transform_token_node`` receives a Token as an argument.
+    ``transform_token_node`` receives a ``Token`` as an argument.
     All other methods receive the node that is being transformed and
     a list of the results of the transformations of that node's children.
     The return value of these methods are the resulting transformations.
@@ -343,7 +344,7 @@ class ForestTransformer(ForestVisitor):
         self.node_stack = deque()
 
     def transform(self, root):
-        """Perform a transformation on a Forest."""
+        """Perform a transformation on an SPPF."""
         self.node_stack.append('result')
         self.data['result'] = []
         self.visit(root)
@@ -364,7 +365,7 @@ class ForestTransformer(ForestVisitor):
         return node
 
     def transform_token_node(self, node):
-        """Transform a Token."""
+        """Transform a ``Token``."""
         return node
 
     def visit_symbol_node_in(self, node):
@@ -453,9 +454,9 @@ class ForestToParseTree(ForestTransformer):
     """Used by the earley parser when ambiguity equals 'resolve' or
     'explicit'. Transforms an SPPF into an (ambiguous) parse tree.
 
-    tree_class: The Tree class to use for construction
+    tree_class: The tree class to use for construction
     callbacks: A dictionary of rules to functions that output a tree
-    prioritizer: A ForestVisitor that manipulates the priorities of
+    prioritizer: A ``ForestVisitor`` that manipulates the priorities of
         ForestNodes
     resolve_ambiguity: If True, ambiguities will be resolved based on
         priorities. Otherwise, `_ambig` nodes will be in the resulting
@@ -590,7 +591,7 @@ class TreeForestTransformer(ForestToParseTree):
 
     :param tree_class: The tree class to use for construction
     :param prioritizer: A ``ForestVisitor`` that manipulates the priorities of
-        ForestNodes.
+        nodes in the SPPF.
     :param resolve_ambiguity: If True, ambiguities will be resolved based on
         priorities. 
     """
@@ -618,7 +619,7 @@ class TreeForestTransformer(ForestToParseTree):
         raise Discard
 
     def __default_token__(self, node):
-        """Default operation on Token (for override).
+        """Default operation on ``Token`` (for override).
 
         Returns ``node``.
         """

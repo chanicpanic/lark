@@ -3,11 +3,11 @@ Working with the SPPF
 
 When parsing with earley, Lark provides the ``ambiguity='forest'`` option
 to obtain the shared packed parse forest (SPPF) produced by the parser as 
-opposed to it being automatically converted to a tree.
+an alternative to it being automatically converted to a tree.
 
 Lark provides a few tools to facilitate working with the SPPF. However, it
 remains no simple undertaking. Here are some things to consider
-when deciding whether using the SPPF is right for you.
+when deciding whether or not to use the SPPF.
 
 **Pros**
 
@@ -19,8 +19,8 @@ when deciding whether using the SPPF is right for you.
 
 **Cons**
 
-- More complex than working with a tree.
-- SPPF may contain nodes corresponding to rules generated internally.
+- More complex than working with a tree
+- SPPF may contain nodes corresponding to rules generated internally
 - Loss of Lark grammar features:
 
   - Rules starting with '_' are not inlined in the SPPF
