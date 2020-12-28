@@ -263,6 +263,10 @@ class ForestVisitor(object):
         vtn = getattr(self, 'visit_token_node')
         oc = getattr(self, 'on_cycle')
 
+        self._on_cycle_retreat = False
+        self._cycle_node = None
+        self._successful_visits = set()
+
         while input_stack:
             current = next(reversed(input_stack))
             try:
@@ -278,6 +282,8 @@ class ForestVisitor(object):
                     continue
 
                 if id(next_node) in visiting:
+                    self._on_cycle_retreat = True
+                    self._cycle_node = next_node
                     oc(next_node, path)
                     continue
 
@@ -291,12 +297,18 @@ class ForestVisitor(object):
 
             current_id = id(current)
             if current_id in visiting:
+                if self._on_cycle_retreat and current_id == id(self._cycle_node) and current_id in self._successful_visits:
+                        self._on_cycle_retreat = False
                 if isinstance(current, PackedNode):
                     vpno(current)
+                    if not self._on_cycle_retreat:
+                        self._successful_visits.add(id(current.parent))
                 elif current.is_intermediate:
                     vino(current)
+                    self._successful_visits.discard(id(current))
                 else:
                     vsno(current)
+                    self._successful_visits.discard(id(current))
                 input_stack.pop()
                 path.pop()
                 visiting.remove(current_id)
@@ -305,18 +317,21 @@ class ForestVisitor(object):
                 visiting.add(current_id)
                 path.append(current)
                 if isinstance(current, PackedNode):
+                    self._on_cycle_retreat = False
                     next_node = vpni(current)
                 elif current.is_intermediate:
                     next_node = vini(current)
                 else:
                     next_node = vsni(current)
-                if next_node is None:
+                if next_node is None or self._on_cycle_retreat:
                     continue
 
                 if not isinstance(next_node, ForestNode) and \
                         not isinstance(next_node, Token):
                     next_node = iter(next_node)
                 elif id(next_node) in visiting:
+                    self._on_cycle_retreat = True
+                    self._cycle_node = next_node
                     oc(next_node, path)
                     continue
 
@@ -438,6 +453,8 @@ class ForestSumVisitor(ForestVisitor):
     items created during parsing than there are SPPF nodes in the
     final tree.
     """
+    def on_cycle(self, node, path):
+        print(node)
     def visit_packed_node_in(self, node):
         yield node.left
         yield node.right
@@ -494,23 +511,14 @@ class ForestToParseTree(ForestTransformer):
         self.callbacks = callbacks
         self.prioritizer = prioritizer
         self.resolve_ambiguity = resolve_ambiguity
-        self._on_cycle_retreat = False
-        self._cycle_node = None
-        self._successful_visits = set()
 
     def on_cycle(self, node, path):
         logger.debug("Cycle encountered in the SPPF at node: %s. "
                 "As infinite ambiguities cannot be represented in a tree, "
                 "this family of derivations will be discarded.", node)
-        self._cycle_node = node
-        self._on_cycle_retreat = True
 
     def _check_cycle(self, node):
         if self._on_cycle_retreat:
-            if id(node) == id(self._cycle_node):
-                self._cycle_node = None
-                self._on_cycle_retreat = False
-                return
             raise Discard()
 
     def _collapse_ambig(self, children):
@@ -539,17 +547,11 @@ class ForestToParseTree(ForestTransformer):
         raise Discard()
 
     def transform_symbol_node(self, node, data):
-        if id(node) not in self._successful_visits:
-            raise Discard()
-        self._successful_visits.remove(id(node))
         self._check_cycle(node)
         data = self._collapse_ambig(data)
         return self._call_ambig_func(node, data)
 
     def transform_intermediate_node(self, node, data):
-        if id(node) not in self._successful_visits:
-            raise Discard()
-        self._successful_visits.remove(id(node))
         self._check_cycle(node)
         if len(data) > 1:
             children = [self.tree_class('_inter', c) for c in data]
@@ -576,22 +578,14 @@ class ForestToParseTree(ForestTransformer):
 
     def visit_symbol_node_in(self, node):
         super(ForestToParseTree, self).visit_symbol_node_in(node)
-        if self._on_cycle_retreat:
-            return
         if self.prioritizer and node.is_ambiguous and isinf(node.priority):
             self.prioritizer.visit(node)
         return node.children
 
     def visit_packed_node_in(self, node):
-        self._on_cycle_retreat = False
         to_visit = super(ForestToParseTree, self).visit_packed_node_in(node)
         if not self.resolve_ambiguity or id(node.parent) not in self._successful_visits:
             return to_visit
-
-    def visit_packed_node_out(self, node):
-        super(ForestToParseTree, self).visit_packed_node_out(node)
-        if not self._on_cycle_retreat:
-            self._successful_visits.add(id(node.parent))
 
 def handles_ambiguity(func):
     """Decorator for methods of subclasses of ``TreeForestTransformer``.
