@@ -501,17 +501,23 @@ class ForestToParseTree(ForestTransformer):
         tree.
     """
 
-    def __init__(self, tree_class=Tree, callbacks=dict(), prioritizer=ForestSumVisitor(), resolve_ambiguity=True):
+    def __init__(self, tree_class=Tree, callbacks=dict(), prioritizer=ForestSumVisitor(), resolve_ambiguity=True, use_cache=True):
         super(ForestToParseTree, self).__init__()
         self.tree_class = tree_class
         self.callbacks = callbacks
         self.prioritizer = prioritizer
         self.resolve_ambiguity = resolve_ambiguity
+        self._use_cache = use_cache
+        self._cache = {}
         self._on_cycle_retreat = False
         self._cycle_node = None
         self._successful_visits = set()
 
     def visit(self, root):
+        self._cache = {}
+        self._on_cycle_retreat = False
+        self._cycle_node = None
+        self._successful_visits = set()
         if self.prioritizer:
             self.prioritizer.visit(root)
         super(ForestToParseTree, self).visit(root)
@@ -561,23 +567,29 @@ class ForestToParseTree(ForestTransformer):
             raise Discard()
         self._check_cycle(node)
         self._successful_visits.remove(id(node))
+        if self._use_cache and id(node) in self._cache:
+            return self._cache[id(node)]
         data = self._collapse_ambig(data)
-        return self._call_ambig_func(node, data)
+        return self._cache.setdefault(id(node), self._call_ambig_func(node, data))
 
     def transform_intermediate_node(self, node, data):
         if id(node) not in self._successful_visits:
             raise Discard()
         self._check_cycle(node)
         self._successful_visits.remove(id(node))
+        if self._use_cache and id(node) in self._cache:
+            return self._cache[id(node)]
         if len(data) > 1:
             children = [self.tree_class('_inter', c) for c in data]
             return self.tree_class('_iambig', children)
-        return data[0]
+        return self._cache.setdefault(id(node), data[0])
 
     def transform_packed_node(self, node, data):
         self._check_cycle(node)
         if self.resolve_ambiguity and id(node.parent) in self._successful_visits:
             raise Discard()
+        if self._use_cache and id(node) in self._cache:
+            return self._cache[id(node)]
         children = []
         assert len(data) <= 2
         data = PackedData(node, data)
@@ -590,7 +602,7 @@ class ForestToParseTree(ForestTransformer):
             children.append(data.right)
         if node.parent.is_intermediate:
             return children
-        return self._call_rule_func(node, children)
+        return self._cache.setdefault(id(node), self._call_rule_func(node, children))
 
     def visit_symbol_node_in(self, node):
         super(ForestToParseTree, self).visit_symbol_node_in(node)
@@ -647,10 +659,13 @@ class TreeForestTransformer(ForestToParseTree):
         nodes in the SPPF.
     :param resolve_ambiguity: If True, ambiguities will be resolved based on
         priorities.
+    :param use_cache: If True, caches the results of transformations to provide
+    a modest performance boost. Do not use unless all transformation
+    functions are pure and referentially transparent.
     """
 
-    def __init__(self, tree_class=Tree, prioritizer=ForestSumVisitor(), resolve_ambiguity=True):
-        super(TreeForestTransformer, self).__init__(tree_class, dict(), prioritizer, resolve_ambiguity)
+    def __init__(self, tree_class=Tree, prioritizer=ForestSumVisitor(), resolve_ambiguity=True, use_cache=False):
+        super(TreeForestTransformer, self).__init__(tree_class, dict(), prioritizer, resolve_ambiguity, use_cache)
 
     def __default__(self, name, data):
         """Default operation on tree (for override).
