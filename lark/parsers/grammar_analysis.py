@@ -204,10 +204,11 @@ class Digraph():
 
     def get_cycles(self):
         visiting = set()
+        visited = set()
         path = []
         cycles = set()
         def visit(node):
-            if node in self._edges:
+            if node in self._edges and node not in visited:
                 visiting.add(node)
                 path.append(node)
                 for neighbor in self._edges[node]:
@@ -218,6 +219,7 @@ class Digraph():
                         visit(neighbor)
                 path.pop()
                 visiting.remove(node)
+                visited.add(node)
 
         for node in self._edges.keys():
             visit(node)
