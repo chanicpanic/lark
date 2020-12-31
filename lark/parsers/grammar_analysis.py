@@ -183,3 +183,43 @@ class GrammarAnalyzer(object):
             pass
 
         return fzset(init_ptrs)
+
+    def find_cycles(self, parser_conf):
+        graph = Digraph()
+        for rule in parser_conf.rules:
+            for i, sym in enumerate(rule.expansion):
+                if not sym.is_term:
+                    if set(rule.expansion[:i]) <= self.NULLABLE and \
+                            set(rule.expansion[i+1:]) <= self.NULLABLE:
+                        graph.add_edge(rule.origin, sym)
+        return graph.get_cycles()
+
+class Digraph():
+
+    def __init__(self):
+        self._edges = {}
+
+    def add_edge(self, n1, n2):
+        self._edges.setdefault(n1, set()).add(n2)
+
+    def get_cycles(self):
+        visiting = set()
+        path = []
+        cycles = set()
+        def visit(node):
+            if node in self._edges:
+                visiting.add(node)
+                path.append(node)
+                for neighbor in self._edges[node]:
+                    if neighbor in visiting:
+                        i = path.index(neighbor)
+                        cycles.add(tuple(path[i:]))
+                    else:
+                        visit(neighbor)
+                path.pop()
+                visiting.remove(node)
+
+        for node in self._edges.keys():
+            visit(node)
+
+        return cycles
