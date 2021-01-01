@@ -1,6 +1,6 @@
 from collections import Counter, defaultdict
 
-from ..utils import bfs, fzset, classify
+from ..utils import bfs, fzset, classify, logger
 from ..exceptions import GrammarError
 from ..grammar import Rule, Terminal, NonTerminal
 
@@ -120,6 +120,56 @@ def calculate_sets(rules):
 
     return FIRST, FOLLOW, NULLABLE
 
+def calculate_cycles(rules, nullable):
+    """From http://pages.cpsc.ucalgary.ca/~robin/class/411/LL1.3.html
+
+    "We may form a relation on the nonterminals of any grammar by:
+     x << y if and if x -> w  y  w' where w and w' are nullable.
+     The grammar has no cycles in case the transitive closure of this relation
+     is anti-reflexive"
+
+    In other words, we can build a directed graph whose edges between grammar
+    symbols represent the above relation. Then we search the graph for cycles
+    to find cycles in the grammar.
+    """
+
+    # the graph is a dict of nonterminals to a set of adjacent nonterminals
+    edges = {}
+
+    for rule in rules:
+        for i, sym in enumerate(rule.expansion):
+            if not sym.is_term:
+                if set(rule.expansion[:i]) <= nullable and set(rule.expansion[i+1:]) <= nullable:
+                    edges.setdefault(rule.origin, set()).add(sym)
+            else:
+                # nullable does not contain terminals
+                break
+
+    # depth-first search
+    visiting = set()
+    visited = set()
+    path = []
+    cycles = set()
+    def visit(node):
+        if node in edges and node not in visited:
+            visiting.add(node)
+            path.append(node)
+            for neighbor in edges[node]:
+                if neighbor in visiting:
+                    i = path.index(neighbor)
+                    cycles.add(tuple(path[i:]))
+                else:
+                    visit(neighbor)
+            path.pop()
+            visiting.remove(node)
+            visited.add(node)
+
+    # Perform dfs starting at each node with a positive out-degree
+    # The graph may not be connected
+    for node in edges.keys():
+        visit(node)
+
+    return cycles
 
 class GrammarAnalyzer(object):
     def __init__(self, parser_conf, debug=False):
@@ -160,6 +210,12 @@ class GrammarAnalyzer(object):
 
         self.FIRST, self.FOLLOW, self.NULLABLE = calculate_sets(rules)
 
+        if self.debug:
+            self.CYCLES = calculate_cycles(rules, self.NULLABLE)
+            for cycle in self.CYCLES:
+                cycle_repr = " -> ".join(sym.name for sym in cycle)
+                logger.debug("Cycle in grammar: %s", cycle_repr)
+
     def expand_rule(self, source_rule, rules_by_origin=None):
         "Returns all init_ptrs accessible by rule (recursive)"
 
@@ -183,45 +239,3 @@ class GrammarAnalyzer(object):
             pass
 
         return fzset(init_ptrs)
-
-    def find_cycles(self, parser_conf):
-        graph = Digraph()
-        for rule in parser_conf.rules:
-            for i, sym in enumerate(rule.expansion):
-                if not sym.is_term:
-                    if set(rule.expansion[:i]) <= self.NULLABLE and \
-                            set(rule.expansion[i+1:]) <= self.NULLABLE:
-                        graph.add_edge(rule.origin, sym)
-        return graph.get_cycles()
-
-class Digraph():
-
-    def __init__(self):
-        self._edges = {}
-
-    def add_edge(self, n1, n2):
-        self._edges.setdefault(n1, set()).add(n2)
-
-    def get_cycles(self):
-        visiting = set()
-        visited = set()
-        path = []
-        cycles = set()
-        def visit(node):
-            if node in self._edges and node not in visited:
-                visiting.add(node)
-                path.append(node)
-                for neighbor in self._edges[node]:
-                    if neighbor in visiting:
-                        i = path.index(neighbor)
-                        cycles.add(tuple(path[i:]))
-                    else:
-                        visit(neighbor)
-                path.pop()
-                visiting.remove(node)
-                visited.add(node)
-
-        for node in self._edges.keys():
-            visit(node)
-
-        return cycles
