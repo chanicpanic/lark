@@ -22,7 +22,7 @@ from .earley_forest import ForestSumVisitor, SymbolNode, ForestToParseTree
 
 class Parser:
     def __init__(self, parser_conf, term_matcher, resolve_ambiguity=True, debug=False, tree_class=Tree):
-        analysis = GrammarAnalyzer(parser_conf)
+        analysis = GrammarAnalyzer(parser_conf, debug=debug)
         self.parser_conf = parser_conf
         self.resolve_ambiguity = resolve_ambiguity
         self.debug = debug
