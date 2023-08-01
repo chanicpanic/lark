@@ -157,7 +157,7 @@ def _should_expand(sym):
     return not sym.is_term and sym.name.startswith('_')
 
 
-def maybe_create_child_filter(expansion, keep_all_tokens, ambiguous, _empty_indices: List[bool]):
+def maybe_create_child_filter(expansion, keep_all_tokens, is_earley, _empty_indices: List[bool]):
     # Prepare empty_indices as: How many Nones to insert at each index?
     if _empty_indices:
         assert _empty_indices.count(False) == len(expansion)
@@ -178,8 +178,8 @@ def maybe_create_child_filter(expansion, keep_all_tokens, ambiguous, _empty_indi
     nones_to_add += empty_indices[len(expansion)]
 
     if _empty_indices or len(to_include) < len(expansion) or any(to_expand for i, to_expand,_ in to_include):
-        if _empty_indices or ambiguous:
-            return partial(ChildFilter if ambiguous else ChildFilterLALR, to_include, nones_to_add)
+        if _empty_indices or is_earley:
+            return partial(ChildFilter if is_earley else ChildFilterLALR, to_include, nones_to_add)
         else:
             # LALR without placeholders
             return partial(ChildFilterLALR_NoPlaceholders, [(i, x) for i,x,_ in to_include])
@@ -327,11 +327,12 @@ def apply_visit_wrapper(func, name, wrapper):
 
 
 class ParseTreeBuilder:
-    def __init__(self, rules, tree_class, propagate_positions=False, ambiguous=False, maybe_placeholders=False):
+    def __init__(self, rules, tree_class, propagate_positions=False, ambiguous=False, maybe_placeholders=False, is_earley=False):
         self.tree_class = tree_class
         self.propagate_positions = propagate_positions
         self.ambiguous = ambiguous
         self.maybe_placeholders = maybe_placeholders
+        self.is_earley = is_earley
 
         self.rule_builders = list(self._init_builders(rules))
 
@@ -345,7 +346,7 @@ class ParseTreeBuilder:
 
             wrapper_chain = list(filter(None, [
                 (expand_single_child and not rule.alias) and ExpandSingleChild,
-                maybe_create_child_filter(rule.expansion, keep_all_tokens, self.ambiguous, options.empty_indices if self.maybe_placeholders else None),
+                maybe_create_child_filter(rule.expansion, keep_all_tokens, self.is_earley, options.empty_indices if self.maybe_placeholders else None),
                 propagate_positions,
                 self.ambiguous and maybe_create_ambiguous_expander(self.tree_class, rule.expansion, keep_all_tokens),
                 self.ambiguous and partial(AmbiguousIntermediateExpander, self.tree_class)

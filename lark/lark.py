@@ -472,7 +472,8 @@ class Lark(Serialize):
                     self.options.tree_class or Tree,
                     self.options.propagate_positions,
                     self.options.parser != 'lalr' and self.options.ambiguity == 'explicit',
-                    self.options.maybe_placeholders
+                    self.options.maybe_placeholders,
+                    self.options.parser == 'earley'
                 )
             self._callbacks = self._parse_tree_builder.create_callback(self.options.transformer)
         self._callbacks.update(_get_lexer_callbacks(self.options.transformer, self.terminals))
