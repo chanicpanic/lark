@@ -916,7 +916,26 @@ def _make_full_earley_test(LEXER):
             tree = l.parse('');
             self.assertEqual(tree, Tree('a', [Tree('x', [Tree('b', [])])]))
 
+        def test_resolve_ambiguity_with_shared_node(self):
+            grammar = """
+            start: (a+)*
+            !a.1: "A" |
+            """
 
+            l = Lark(grammar, ambiguity='resolve', lexer=LEXER)
+            tree = l.parse("A")
+            self.assertEqual(tree, Tree('start', [Tree('a', []), Tree('a', []), Tree('a', ['A'])]))
+
+        def test_resolve_ambiguity_with_shared_node2(self):
+            grammar = """
+            start: _s x _s
+            x: "X"?
+            _s: " "?
+            """
+
+            l = Lark(grammar, ambiguity='resolve', lexer=LEXER)
+            tree = l.parse("")
+            self.assertEqual(tree, Tree('start', [Tree('x', [])]))
 
 
 
